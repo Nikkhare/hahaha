@@ -179,3 +179,84 @@ sudo ./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-jav
 //check if the smart contract container successfully created
 docker ps
 
+
+v2:
+
+Hyperledger Test-Network Version 2.2.2
+
+Reference: 
+https://hyperledger-fabric.readthedocs.io/en/release-2.2/test_network.html
+
+Download fabric-samples
+curl -sSL https://bit.ly/2ysbOFE | bash -s -- 2.2.2 1.4.9
+
+Remove all previous work
+cd fabric-samples/test-network
+./network.sh down
+
+Use this if you are sure, what you are doing
+docker rm -f $(docker ps -aq)
+docker rmi -f $(docker images -q)
+docker container prune
+docker volume prune
+
+
+Start fresh network
+./network.sh up
+
+Create Channel
+./network.sh createChannel -c mychannel
+
+Deploy example smart contract called “Asset-Transfer-Basic”
+./network.sh deployCC -ccn basic -ccp ../asset-transfer-basic/chaincode-go -ccl go
+
+Setup Environment Variable (do it from test-network)
+
+
+Initialize the ledger
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem" -C mychannel -n basic --peerAddresses localhost:7051 --tlsRootCertFiles "${PWD}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt" --peerAddresses localhost:9051 --tlsRootCertFiles "${PWD}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt" -c '{"function":"InitLedger","Args":[]}'
+
+Query Ledger
+peer chaincode query -C mychannel -n basic -c '{"Args":["GetAllAssets"]}'
+
+Invoke Ledger
+peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem" -C mychannel -n basic --peerAddresses localhost:7051 --tlsRootCertFiles "${PWD}/organizations/peerOrganizations/org1.example.com/peers/peer0.org1.example.com/tls/ca.crt" --peerAddresses localhost:9051 --tlsRootCertFiles "${PWD}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt" -c '{"function":"TransferAsset","Args":["asset6","Christopher"]}'
+
+Useful command
+sudo groupadd docker
+sudo usermod -aG docker $USER 
+su -s ${USER}
+sudo chown "$USER:$USER" /home/"$USER"/.docker -R
+sudo chmod g+rwx "$HOME/.docker" -R
+sudo chmod 666 /var/run/docker.sock
+sudo docker rmi $(sudo docker images -f “dangling=true” -q)
+sudo systemctl restart docker
+
+docker -v
+docker images
+docker ps
+docker ps -a
+docker pull IMAGE:TAG
+docker exec -it cli bash
+docker exec -it CONTAINTER_ID /bin/bash
+docker logs CONTAINTER_ID
+docker exec CONTAINERID COMMAND_LINUX
+docker cp HOST_DIRECTORY CONTAINER_ID:CONTAINER_DIRECTORY
+Common Error
+1.	No docker image found
+Solution: pull docker image from the dockerhub, or start the process again, may be internet connection problem
+
+2.	Can not run specific software
+Solution: Download the software and install it, don’t forget to set a necessary environment variable.
+
+3.	Software dependencies
+Solution: Make sure to have the software versions compatible, when using multiple software.
+
+4.	Permission denied
+Solution: use sudo command, set up an environment variable for the root user, and add the current user to sudoer group
+
+5.	Unknown error
+Solution: Always read the error message, copy it, and paste it to search solution on the Internet, someone already solved it long ago.
+//////////////////
+
+
